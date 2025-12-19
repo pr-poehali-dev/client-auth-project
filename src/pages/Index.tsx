@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,6 +27,7 @@ export default function Index() {
   const [isAuth, setIsAuth] = useState(false);
   const [phone, setPhone] = useState('');
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [currentView, setCurrentView] = useState<'news' | 'profile'>('news');
 
   const mockNews: NewsItem[] = [
@@ -65,9 +66,19 @@ export default function Index() {
     if (phone.length >= 10) {
       setIsAuth(true);
       setShowLoginDialog(false);
+      setShowSuccessDialog(true);
       setCurrentView('news');
     }
   };
+
+  useEffect(() => {
+    if (showSuccessDialog) {
+      const timer = setTimeout(() => {
+        setShowSuccessDialog(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessDialog]);
 
   const handleProfileClick = () => {
     if (isAuth) {
@@ -100,7 +111,11 @@ export default function Index() {
                 handleProfileClick();
               }
             }}
-            className="flex items-center gap-2"
+            className={`flex items-center gap-2 transition-all duration-200 ${
+              isAuth && currentView !== 'profile' 
+                ? 'bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground' 
+                : ''
+            }`}
           >
             <Icon name={currentView === 'profile' ? "Newspaper" : (isAuth ? "User" : "LogIn")} size={18} />
             {currentView === 'profile' ? "Новости" : (isAuth ? "Профиль" : "Войти")}
@@ -197,6 +212,25 @@ export default function Index() {
           </div>
         )}
       </main>
+
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center space-y-2">
+            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-2 animate-scale-in">
+              <Icon name="CheckCircle2" size={32} className="text-primary" />
+            </div>
+            <DialogTitle className="text-2xl">Вы успешно вошли!</DialogTitle>
+            <DialogDescription>
+              Добро пожаловать в личный кабинет
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            <Button onClick={() => setShowSuccessDialog(false)} className="w-full h-12 text-base font-semibold">
+              ОК
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
         <DialogContent className="sm:max-w-md">
