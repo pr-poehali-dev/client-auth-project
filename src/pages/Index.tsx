@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 
 interface Visit {
@@ -25,34 +27,40 @@ interface NewsItem {
 
 export default function Index() {
   const [isAuth, setIsAuth] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [phone, setPhone] = useState('');
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [currentView, setCurrentView] = useState<'news' | 'profile'>('news');
+  const [showAdminDialog, setShowAdminDialog] = useState(false);
+  const [currentView, setCurrentView] = useState<'news' | 'profile' | 'admin'>('news');
 
-  const mockNews: NewsItem[] = [
+  const [news, setNews] = useState<NewsItem[]>([
     {
       id: '1',
       title: 'Новый тренажёр для функционального тренинга',
       description: 'В зале появилось современное оборудование для кроссфита и функциональных тренировок',
       date: '15 декабря 2024',
-      image: '🏋️',
+      image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=600&fit=crop',
     },
     {
       id: '2',
       title: 'Праздничное расписание на новогодние каникулы',
       description: 'С 31 декабря по 8 января клуб работает по специальному графику',
       date: '10 декабря 2024',
-      image: '🎄',
+      image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=800&h=600&fit=crop',
     },
     {
       id: '3',
       title: 'Акция: приведи друга и получи бонус',
       description: 'За каждого приведённого друга — дополнительная тренировка в подарок',
       date: '5 декабря 2024',
-      image: '🎁',
+      image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&h=600&fit=crop',
     },
-  ];
+  ]);
+
+  const [newNewsTitle, setNewNewsTitle] = useState('');
+  const [newNewsDescription, setNewNewsDescription] = useState('');
+  const [newNewsImage, setNewNewsImage] = useState('');
 
   const mockVisits: Visit[] = [
     { id: '1', date: '19.12.2024', timeIn: '10:30', timeOut: '12:15', remaining: 7 },
@@ -65,10 +73,34 @@ export default function Index() {
   const handleLogin = () => {
     if (phone.length >= 10) {
       setIsAuth(true);
+      if (phone === '+79999999999') {
+        setIsAdmin(true);
+      }
       setShowLoginDialog(false);
       setShowSuccessDialog(true);
       setCurrentView('news');
     }
+  };
+
+  const handleAddNews = () => {
+    if (newNewsTitle && newNewsDescription && newNewsImage) {
+      const newItem: NewsItem = {
+        id: Date.now().toString(),
+        title: newNewsTitle,
+        description: newNewsDescription,
+        date: new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
+        image: newNewsImage,
+      };
+      setNews([newItem, ...news]);
+      setNewNewsTitle('');
+      setNewNewsDescription('');
+      setNewNewsImage('');
+      setShowAdminDialog(false);
+    }
+  };
+
+  const handleDeleteNews = (id: string) => {
+    setNews(news.filter(item => item.id !== id));
   };
 
   useEffect(() => {
@@ -101,25 +133,49 @@ export default function Index() {
             </div>
             <h1 className="text-xl font-bold">Фитнес Клуб</h1>
           </button>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => {
-              if (currentView === 'profile') {
-                setCurrentView('news');
-              } else {
-                handleProfileClick();
-              }
-            }}
-            className={`flex items-center gap-2 transition-all duration-200 ${
-              isAuth && currentView !== 'profile' 
-                ? 'bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground' 
-                : ''
-            }`}
-          >
-            <Icon name={currentView === 'profile' ? "Newspaper" : (isAuth ? "User" : "LogIn")} size={18} />
-            {currentView === 'profile' ? "Новости" : (isAuth ? "Профиль" : "Войти")}
-          </Button>
+          <div className="flex items-center gap-2">
+            {isAdmin && currentView === 'news' && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setCurrentView('admin')}
+                className="flex items-center gap-2"
+              >
+                <Icon name="Settings" size={18} />
+                Админ
+              </Button>
+            )}
+            {currentView === 'admin' && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setCurrentView('news')}
+                className="flex items-center gap-2"
+              >
+                <Icon name="Newspaper" size={18} />
+                Новости
+              </Button>
+            )}
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => {
+                if (currentView === 'profile') {
+                  setCurrentView('news');
+                } else {
+                  handleProfileClick();
+                }
+              }}
+              className={`flex items-center gap-2 transition-all duration-200 ${
+                isAuth && currentView !== 'profile' && currentView !== 'admin'
+                  ? 'bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground' 
+                  : ''
+              }`}
+            >
+              <Icon name={currentView === 'profile' ? "Newspaper" : (isAuth ? "User" : "LogIn")} size={18} />
+              {currentView === 'profile' ? "Новости" : (isAuth ? "Профиль" : "Войти")}
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -127,25 +183,67 @@ export default function Index() {
         {currentView === 'news' ? (
           <div className="space-y-4 animate-fade-in">
             <h2 className="text-2xl font-bold mb-6">Новости клуба</h2>
-            {mockNews.map((news) => (
-              <Card key={news.id} className="overflow-hidden hover:shadow-md transition-shadow">
+            {news.map((item) => (
+              <Card key={item.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                <div className="aspect-[4/3] overflow-hidden">
+                  <img 
+                    src={item.image} 
+                    alt={item.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
                 <CardHeader className="pb-3">
-                  <div className="flex items-start gap-4">
-                    <div className="text-5xl">{news.image}</div>
-                    <div className="flex-1">
-                      <CardTitle className="text-lg mb-1">{news.title}</CardTitle>
-                      <CardDescription className="text-sm">{news.description}</CardDescription>
-                    </div>
-                  </div>
+                  <CardTitle className="text-lg mb-1">{item.title}</CardTitle>
+                  <CardDescription className="text-sm">{item.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Icon name="Calendar" size={14} />
-                    {news.date}
+                    {item.date}
                   </div>
                 </CardContent>
               </Card>
             ))}
+          </div>
+        ) : currentView === 'admin' ? (
+          <div className="space-y-6 animate-fade-in">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Управление новостями</h2>
+              <Button onClick={() => setShowAdminDialog(true)} className="flex items-center gap-2">
+                <Icon name="Plus" size={18} />
+                Добавить новость
+              </Button>
+            </div>
+            <div className="space-y-4">
+              {news.map((item) => (
+                <Card key={item.id} className="overflow-hidden">
+                  <div className="flex gap-4">
+                    <img 
+                      src={item.image} 
+                      alt={item.title}
+                      className="w-32 h-24 object-cover"
+                    />
+                    <div className="flex-1 p-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold mb-1">{item.title}</h3>
+                          <p className="text-sm text-muted-foreground mb-2">{item.description}</p>
+                          <p className="text-xs text-muted-foreground">{item.date}</p>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDeleteNews(item.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Icon name="Trash2" size={18} />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="space-y-6 animate-fade-in">
@@ -260,6 +358,75 @@ export default function Index() {
             <p className="text-xs text-center text-muted-foreground">
               Нажимая кнопку, вы соглашаетесь с обработкой персональных данных
             </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showAdminDialog} onOpenChange={setShowAdminDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Добавить новость</DialogTitle>
+            <DialogDescription>
+              Заполните информацию о новой новости клуба
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Заголовок</Label>
+              <Input
+                id="title"
+                placeholder="Название новости"
+                value={newNewsTitle}
+                onChange={(e) => setNewNewsTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Описание</Label>
+              <Textarea
+                id="description"
+                placeholder="Текст новости"
+                value={newNewsDescription}
+                onChange={(e) => setNewNewsDescription(e.target.value)}
+                rows={4}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="image">Ссылка на картинку</Label>
+              <Input
+                id="image"
+                placeholder="https://example.com/image.jpg"
+                value={newNewsImage}
+                onChange={(e) => setNewNewsImage(e.target.value)}
+              />
+              {newNewsImage && (
+                <div className="mt-2 rounded-lg overflow-hidden border">
+                  <img 
+                    src={newNewsImage} 
+                    alt="Предпросмотр"
+                    className="w-full h-48 object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = 'https://via.placeholder.com/800x600?text=Ошибка+загрузки';
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button 
+                onClick={handleAddNews} 
+                className="flex-1"
+                disabled={!newNewsTitle || !newNewsDescription || !newNewsImage}
+              >
+                Добавить
+              </Button>
+              <Button 
+                onClick={() => setShowAdminDialog(false)} 
+                variant="outline"
+                className="flex-1"
+              >
+                Отмена
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
