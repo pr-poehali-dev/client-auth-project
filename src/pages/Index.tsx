@@ -93,11 +93,17 @@ export default function Index() {
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={handleProfileClick}
+            onClick={() => {
+              if (currentView === 'profile') {
+                setCurrentView('news');
+              } else {
+                handleProfileClick();
+              }
+            }}
             className="flex items-center gap-2"
           >
-            <Icon name={isAuth ? "User" : "LogIn"} size={18} />
-            {isAuth ? "Профиль" : "Войти"}
+            <Icon name={currentView === 'profile' ? "Newspaper" : (isAuth ? "User" : "LogIn")} size={18} />
+            {currentView === 'profile' ? "Новости" : (isAuth ? "Профиль" : "Войти")}
           </Button>
         </div>
       </header>
@@ -128,17 +134,7 @@ export default function Index() {
           </div>
         ) : (
           <div className="space-y-6 animate-fade-in">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">Мой профиль</h2>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => setCurrentView('news')}
-              >
-                <Icon name="ArrowLeft" size={18} className="mr-2" />
-                К новостям
-              </Button>
-            </div>
+            <h2 className="text-2xl font-bold mb-6">Мой профиль</h2>
 
             <Card>
               <CardHeader>
