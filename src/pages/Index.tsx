@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Icon from '@/components/ui/icon';
 
 interface Visit {
@@ -25,7 +26,8 @@ interface NewsItem {
 export default function Index() {
   const [isAuth, setIsAuth] = useState(false);
   const [phone, setPhone] = useState('');
-  const [activeTab, setActiveTab] = useState<'news' | 'profile'>('news');
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [currentView, setCurrentView] = useState<'news' | 'profile'>('news');
 
   const mockNews: NewsItem[] = [
     {
@@ -62,83 +64,48 @@ export default function Index() {
   const handleLogin = () => {
     if (phone.length >= 10) {
       setIsAuth(true);
+      setShowLoginDialog(false);
+      setCurrentView('news');
     }
   };
 
-  if (!isAuth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
-        <Card className="w-full max-w-md shadow-lg animate-fade-in">
-          <CardHeader className="text-center space-y-2">
-            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
-              <Icon name="Dumbbell" size={32} className="text-primary" />
-            </div>
-            <CardTitle className="text-3xl font-bold">Фитнес Клуб</CardTitle>
-            <CardDescription className="text-base">
-              Войдите для доступа к личному кабинету
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground/80">Номер телефона</label>
-              <Input
-                type="tel"
-                placeholder="+7 (999) 123-45-67"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="h-12 text-base"
-              />
-            </div>
-            <Button onClick={handleLogin} className="w-full h-12 text-base font-semibold">
-              Войти
-            </Button>
-            <p className="text-xs text-center text-muted-foreground">
-              Нажимая кнопку, вы соглашаетесь с обработкой персональных данных
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const handleProfileClick = () => {
+    if (isAuth) {
+      setCurrentView('profile');
+    } else {
+      setShowLoginDialog(true);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-card border-b shadow-sm">
         <div className="container max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setCurrentView('news')}
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+          >
             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
               <Icon name="Dumbbell" size={20} className="text-primary" />
             </div>
             <h1 className="text-xl font-bold">Фитнес Клуб</h1>
-          </div>
-          <Button variant="ghost" size="icon" onClick={() => setIsAuth(false)}>
-            <Icon name="LogOut" size={20} />
+          </button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={handleProfileClick}
+            className="flex items-center gap-2"
+          >
+            <Icon name={isAuth ? "User" : "LogIn"} size={18} />
+            {isAuth ? "Профиль" : "Войти"}
           </Button>
         </div>
       </header>
 
       <main className="container max-w-4xl mx-auto px-4 py-6">
-        <div className="flex gap-2 mb-6">
-          <Button
-            variant={activeTab === 'news' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('news')}
-            className="flex-1 h-11"
-          >
-            <Icon name="Newspaper" size={18} className="mr-2" />
-            Новости
-          </Button>
-          <Button
-            variant={activeTab === 'profile' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('profile')}
-            className="flex-1 h-11"
-          >
-            <Icon name="User" size={18} className="mr-2" />
-            Профиль
-          </Button>
-        </div>
-
-        {activeTab === 'news' ? (
+        {currentView === 'news' ? (
           <div className="space-y-4 animate-fade-in">
+            <h2 className="text-2xl font-bold mb-6">Новости клуба</h2>
             {mockNews.map((news) => (
               <Card key={news.id} className="overflow-hidden hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
@@ -161,6 +128,18 @@ export default function Index() {
           </div>
         ) : (
           <div className="space-y-6 animate-fade-in">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Мой профиль</h2>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setCurrentView('news')}
+              >
+                <Icon name="ArrowLeft" size={18} className="mr-2" />
+                К новостям
+              </Button>
+            </div>
+
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-4">
@@ -222,6 +201,38 @@ export default function Index() {
           </div>
         )}
       </main>
+
+      <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center space-y-2">
+            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-2">
+              <Icon name="Dumbbell" size={32} className="text-primary" />
+            </div>
+            <DialogTitle className="text-2xl">Вход в личный кабинет</DialogTitle>
+            <DialogDescription>
+              Введите номер телефона для доступа к профилю
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground/80">Номер телефона</label>
+              <Input
+                type="tel"
+                placeholder="+7 (999) 123-45-67"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="h-12 text-base"
+              />
+            </div>
+            <Button onClick={handleLogin} className="w-full h-12 text-base font-semibold">
+              Войти
+            </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              Нажимая кнопку, вы соглашаетесь с обработкой персональных данных
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
